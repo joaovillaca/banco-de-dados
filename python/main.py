@@ -22,6 +22,7 @@ print(">>> \t1.2.1")
 
 ConsoleHeader = "Console"
 con = None
+session = None
 
 while(True):
 
@@ -29,6 +30,13 @@ while(True):
     command = input()
 
     if command == 'exit' or command == 'q' or command == 'quit':
+
+        if session != None:
+            session.close()
+
+        if con != None:
+            con.close()
+
         print("(%s) >> Terminando o programa." % command)
         exit()
 
@@ -81,6 +89,11 @@ while(True):
         if con == None:
             print("(%s) >> " % ConsoleHeader + "Não há conexão estabelecida.")
             continue
+
+        if session != None:
+            session.close()
+            session = None
+
         con.close()
         con = None
         ConsoleHeader = "Console"
@@ -130,14 +143,17 @@ while(True):
         session = con.cursor()
         ConsoleHeader = "Query"
         myHeader(ConsoleHeader)
-        print("Busca por nome de atração.")
+        print("Listar todos os turistas que participam de um Festival.")
         myHeader(ConsoleHeader)
-        atracao = input("Nome da atração: ")
+        festival = input("Nome do festival: ")
         try:
-            session.execute("""SELECT DISTINCT T.Nome as Turista, I.Festa, F.Nome as Festival 
-                                FROM Ingresso I, Turista T, Atracoes A, Festival F
-                                WHERE A.Atracao = '%s'
-                                ORDER BY Festival;""", (atracao))
+            session.execute("""SELECT DISTINCT T.Nome, T.NumPassaporte, I.PaisTurista as paisOrigem
+                               FROM Ingresso I, Turista T
+                               WHERE I.PaisTurista = T.PaisOrigem 
+                               AND I.TuristaPassaporte = T.NumPassaporte 
+                               AND I.Festival = ( SELECT IdFiscal 
+                                                  FROM Festival 
+                                                  WHERE Nome = '%s');""" % festival)
         except Exception:
             myHeader(ConsoleHeader)
             print("PSQL: não foi possível fazer a consulta.")
@@ -145,10 +161,16 @@ while(True):
             continue
 
         rows = session.fetchall()
+        if rows == '' or rows == None:
+            myHeader(ConsoleHeader)
+            print("A consulta não obteve resultados.")
+            ConsoleHeader = db
+            continue
+
         for i in rows:
             print(f"Nome: {i[0]}")
-            print(f"Festa: {i[1]}")
-            print(f"Festival: {i[2]}")
+            print(f"Passaporte: {i[1]}")
+            print(f"País de Origem: {i[2]}")
 
         session.close()
         ConsoleHeader = db
