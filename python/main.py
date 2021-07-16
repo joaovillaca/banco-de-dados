@@ -18,7 +18,7 @@ print(">>> \tPOSTGRESQL 13.3")
 print(">>> Driver :")
 print(">>> \tpsycopg2")
 print(">>> Versão :")
-print(">>> \t1.2.1")
+print(">>> \t1.3.0")
 
 ConsoleHeader = "Console"
 con = None
@@ -32,9 +32,11 @@ while(True):
     if command == 'exit' or command == 'q' or command == 'quit':
 
         if session != None:
+            print("(%s) >> Terminando a sessão atual." % command)
             session.close()
 
         if con != None:
+            print("(%s) >> Fechando a conexão atual." % command)
             con.close()
 
         print("(%s) >> Terminando o programa." % command)
@@ -82,6 +84,9 @@ while(True):
             print(loginHeader + "Erro ao conectar com o PostgreSQL.")
             continue
         print(loginHeader + "Conexão feita com sucesso.")
+
+        str_database = db
+        db = user + " @ " + db
         ConsoleHeader = db
         continue
     
@@ -106,7 +111,7 @@ while(True):
             continue
 
         session = con.cursor()
-        ConsoleHeader = "Insert"
+        ConsoleHeader = "Insert @ " + str_database
 
         myHeader(ConsoleHeader)
         Nome = input("Nome: ")
@@ -122,6 +127,8 @@ while(True):
         NumPassaporte = input("Passaporte: ")
         Senha = getpass("(%s) >> Senha: " % ConsoleHeader)
 
+        # INSERT na database: Turista recém-cadastrado
+        # essa é a forma de inserção recomendada pelo psycopg2 (https://www.psycopg.org/docs/usage.html)
         try:
             session.execute("INSERT INTO Turista (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha) values (%s, %s, %s, %s, %s, %s, %s)",
             (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha))
@@ -141,11 +148,14 @@ while(True):
             continue
 
         session = con.cursor()
-        ConsoleHeader = "Query"
+        ConsoleHeader = "Query @ " + str_database
         myHeader(ConsoleHeader)
         print("Listar todos os turistas que participam de um Festival.")
         myHeader(ConsoleHeader)
         festival = input("Nome do festival: ")
+
+        # Query na database: Turistas a partir de um festival
+        # essa é outra forma de formatação de queries recomendada pelo psycopg2
         try:
             session.execute("""SELECT DISTINCT T.Nome, T.NumPassaporte, I.PaisTurista as paisOrigem
                                FROM Ingresso I, Turista T
@@ -153,21 +163,25 @@ while(True):
                                AND I.TuristaPassaporte = T.NumPassaporte 
                                AND I.Festival = ( SELECT IdFiscal 
                                                   FROM Festival 
-                                                  WHERE Nome = '%s');""" % festival)
+                                                  WHERE Nome = (%s));""", [festival])
         except Exception:
             myHeader(ConsoleHeader)
             print("PSQL: não foi possível fazer a consulta.")
+            session.close()
             ConsoleHeader = db
             continue
 
+        # fetchall() retorna uma tupla com os resultados da sessão
         rows = session.fetchall()
-        if rows == '' or rows == None:
+
+        if len(rows) == 0: # tupla vazia
             myHeader(ConsoleHeader)
             print("A consulta não obteve resultados.")
             ConsoleHeader = db
             continue
 
         for i in rows:
+            print('')
             print(f"Nome: {i[0]}")
             print(f"Passaporte: {i[1]}")
             print(f"País de Origem: {i[2]}")
@@ -177,11 +191,9 @@ while(True):
         continue
 
 
-
     if command == '':
         continue
 
     myHeader(ConsoleHeader)
     print("Comando '%s' desconhecido. Para comandos digite help" % command)        
     
-
