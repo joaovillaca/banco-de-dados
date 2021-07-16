@@ -18,7 +18,7 @@ print(">>> \tPOSTGRESQL 13.3")
 print(">>> Driver :")
 print(">>> \tpsycopg2")
 print(">>> Versão :")
-print(">>> \t0.0.2")
+print(">>> \t1.2.1")
 
 ConsoleHeader = "Console"
 con = None
@@ -39,11 +39,13 @@ while(True):
     if command == 'help' or command == 'h':
         print('')
         print("Comandos:")
-        print("\texit, quit, q:\tsair do programa.")
-        print("\thelp, h      :\tajuda e comandos.")
-        print("\tclear, cls   :\tlimpar o console.")
-        print("\tlogin        :\tlogin em uma database.")
-        print("\tlogout       :\tlogout de volta para o console.")
+        print("\texit, quit, q\t:\tSair do programa.")
+        print("\thelp, h      \t:\tAjuda e comandos.")
+        print("\tclear, cls   \t:\tLimpar o console.")
+        print("\tlogin        \t:\tLogin em uma database.")
+        print("\tlogout       \t:\tLogout de volta para o console.")
+        print("\tinsert       \t:\tInserir na database logada.")
+        print("\tquery        \t:\tConsulta na database logada.")
         print('')
         continue
 
@@ -116,8 +118,7 @@ while(True):
     
         con.commit()
         session.close()
-        ConsoleHeader = "Console"
-        #myHeader(ConsoleHeader)
+        ConsoleHeader = db
         continue
         
 
@@ -137,16 +138,28 @@ while(True):
                                 FROM Ingresso I, Turista T, Atracoes A, Festival F
                                 WHERE A.Atracao = '%s'
                                 ORDER BY Festival;""", (atracao))
-            for record in session:
-                for i in record:
-                    myHeader(ConsoleHeader)
-                    print(i)
         except Exception:
             myHeader(ConsoleHeader)
-            print("PSQL: não foi possível fazer a consulta.")    
+            print("PSQL: não foi possível fazer a consulta.")
+            ConsoleHeader = db
+            continue
+
+        rows = session.fetchall()
+        for i in rows:
+            print(f"Nome: {i[0]}")
+            print(f"Festa: {i[1]}")
+            print(f"Festival: {i[2]}")
 
         session.close()
+        ConsoleHeader = db
         continue
-            
 
+
+
+    if command == '':
+        continue
+
+    myHeader(ConsoleHeader)
+    print("Comando '%s' desconhecido. Para comandos digite help" % command)        
+    
 
