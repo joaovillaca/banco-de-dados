@@ -70,11 +70,7 @@ ORDER BY Gasto_Total DESC;
 /* Consulta 7: Nome de Turistas que compraram ingresso para uma festa no qual o Alok apresenta*/
 SELECT DISTINCT T.Nome as Turista, I.Festa, F.Nome as Festival 
 FROM Ingresso I, Turista T, Atracoes A, Festival F
-WHERE I.PaisTurista = T.PaisOrigem 
-  AND I.TuristaPassaporte = T.NumPassaporte 
-  AND A.Atracao = 'Alok' 
-  AND I.Festa = A.Festa 
-  AND I.Festival = F.IdFiscal
+WHERE A.Atracao = 'Alok'
 ORDER BY Festival;
 
 

@@ -112,12 +112,14 @@ while(True):
             (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha))
         except Exception:
             myHeader(ConsoleHeader)
-            print("PSQL: não foi possível fazer a inserção.")        
+            print("PSQL: não foi possível fazer a inserção.")       
     
         con.commit()
         session.close()
-        continue
+        ConsoleHeader = "Console"
         #myHeader(ConsoleHeader)
+        continue
+        
 
     if command == 'query':
         if con == None:
@@ -130,18 +132,18 @@ while(True):
         print("Busca por nome de atração.")
         myHeader(ConsoleHeader)
         atracao = input("Nome da atração: ")
-        session.execute("""SELECT DISTINCT T.Nome as Turista, I.Festa, F.Nome as Festival 
+        try:
+            session.execute("""SELECT DISTINCT T.Nome as Turista, I.Festa, F.Nome as Festival 
                                 FROM Ingresso I, Turista T, Atracoes A, Festival F
-                                WHERE I.PaisTurista = T.PaisOrigem 
-                                AND I.TuristaPassaporte = T.NumPassaporte 
-                                AND A.Atracao = ('%s') 
-                                AND I.Festa = A.Festa 
-                                AND I.Festival = F.IdFiscal
+                                WHERE A.Atracao = '%s'
                                 ORDER BY Festival;""", (atracao))
-        for record in session:
-            for i in record:
-                myHeader(ConsoleHeader)
-                print(i)
+            for record in session:
+                for i in record:
+                    myHeader(ConsoleHeader)
+                    print(i)
+        except Exception:
+            myHeader(ConsoleHeader)
+            print("PSQL: não foi possível fazer a consulta.")    
 
         session.close()
         continue
