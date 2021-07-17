@@ -6,17 +6,18 @@ CREATE TABLE Turista (
 	Telefone VARCHAR(25) NOT NULL,
 	Email VARCHAR(254) NOT NULL,
 	Senha VARCHAR(25) NOT NULL,
-	PRIMARY KEY(PaisOrigem, NumPassaporte)
+	CONSTRAINT PK_TURISTA PRIMARY KEY(PaisOrigem, NumPassaporte)
 );
 
 CREATE TABLE Pais (
-	Nome VARCHAR(50) PRIMARY KEY
+	Nome VARCHAR(50),
+    CONSTRAINT PK_PAIS PRIMARY KEY(Nome)
 );
 
 CREATE TABLE Festival (
-	IdFiscal VARCHAR(30) PRIMARY KEY,
+	IdFiscal VARCHAR(30),
 	Nome VARCHAR(25) NOT NULL,
-	Pais VARCHAR(50) NOT NULL REFERENCES Pais,
+	Pais VARCHAR(50) NOT NULL,
 	Descricao VARCHAR(300),
 	DataInicio DATE NOT NULL,
 	DataFim DATE NOT NULL,
@@ -25,17 +26,20 @@ CREATE TABLE Festival (
 	ZipCode VARCHAR(30),
 	Bairro VARCHAR(50),
 	Logradouro VARCHAR(100),
-	Numero INTEGER
+	Numero INTEGER,
+    CONSTRAINT PK_FESTIVAL PRIMARY KEY(IdFiscal),
+    CONSTRAINT FK_FESTIVAL FOREIGN KEY(Pais) REFERENCES Pais(Nome) ON DELETE CASCADE 
 );
 
 CREATE TABLE Festa (
-	Festival VARCHAR(30) REFERENCES Festival,
+	Festival VARCHAR(30),
 	Nome VARCHAR(25),
 	Capacidade INTEGER NOT NULL,
 	DataFesta DATE NOT NULL,
 	HoraInicio TIME NOT NULL,
 	HoraFim TIME NOT NULL,
-	PRIMARY KEY (Festival, Nome)
+	CONSTRAINT PK_FESTA PRIMARY KEY(Festival, Nome),
+    CONSTRAINT FK_FESTA FOREIGN KEY(Festival) REFERENCES Festival(IdFiscal) ON DELETE CASCADE
 );
 
 CREATE TABLE Atracoes (
@@ -43,8 +47,8 @@ CREATE TABLE Atracoes (
 	Festa VARCHAR(25),
 	Atracao VARCHAR(25),
 	Descricao VARCHAR(300),
-	FOREIGN KEY (Festival, Festa) REFERENCES Festa (Festival, Nome),
-	PRIMARY KEY (Festival, Festa, Atracao)
+    CONSTRAINT PK_ATRACOES PRIMARY KEY(Festival, Festa, Atracao),
+	CONSTRAINT FK_ATRACOES FOREIGN KEY(Festival, Festa) REFERENCES Festa(Festival, Nome) ON DELETE CASCADE
 );
 
 CREATE TABLE Ingresso (
@@ -53,19 +57,20 @@ CREATE TABLE Ingresso (
 	NumIngresso VARCHAR(30),
 	PaisTurista VARCHAR(50),
 	TuristaPassaporte VARCHAR(20),
-	Preco NUMERIC NOT NULL CHECK (Preco >= 0),
+	Preco NUMERIC NOT NULL,
 	DataValidade DATE NOT NULL,
 	NumCompra VARCHAR(25),
 	DataCompra DATE,
 	HoraCompra TIME,
-	FOREIGN KEY (Festival, Festa) REFERENCES Festa (Festival, Nome),
-	FOREIGN KEY (PaisTurista, TuristaPassaporte) REFERENCES Turista (PaisOrigem, NumPassaporte),
-	PRIMARY KEY (Festival, Festa, NumIngresso)
+    CONSTRAINT PK_INGRESSO PRIMARY KEY(Festival, Festa, NumIngresso),
+	CONSTRAINT FK1_INGRESSO FOREIGN KEY(Festival, Festa) REFERENCES Festa(Festival, Nome) ON DELETE CASCADE,
+	CONSTRAINT FK2_INGRESSO FOREIGN KEY(PaisTurista, TuristaPassaporte) REFERENCES Turista(PaisOrigem, NumPassaporte) ON DELETE SET NULL,
+    CONSTRAINT CK_PRECO_INGRESSO CHECK(Preco >= 0)
 );
 
 CREATE TABLE ServicoHospedagem (
-	IdFiscal VARCHAR(30) PRIMARY KEY,
-	Pais VARCHAR(50) NOT NULL REFERENCES Pais,
+	IdFiscal VARCHAR(30),
+	Pais VARCHAR(50) NOT NULL,
 	TipoAcomodacao VARCHAR(25),
 	Nome VARCHAR(25) NOT NULL,
 	Descricao VARCHAR(300),
@@ -73,76 +78,99 @@ CREATE TABLE ServicoHospedagem (
 	ZipCode VARCHAR(30),
 	Bairro VARCHAR(50),
 	Logradouro VARCHAR(100),
-	Numero INTEGER
+	Numero INTEGER,
+    CONSTRAINT PK_SERVICO_HOSPEDAGEM PRIMARY KEY(IdFiscal),
+    CONSTRAINT FK_SERVICO_HOSPEDAGEM FOREIGN KEY(Pais) REFERENCES Pais(Nome) ON DELETE CASCADE
 );
 
 CREATE TABLE Hotel (
-	IdFiscal VARCHAR(30) REFERENCES ServicoHospedagem PRIMARY KEY,
-	Classificacao INTEGER NOT NULL CHECK (Classificacao >= 0 AND Classificacao <= 5),
-	PrecoDiaria NUMERIC NOT NULL CHECK (PrecoDiaria > 0)
+	IdFiscal VARCHAR(30),
+	Classificacao INTEGER NOT NULL,
+	PrecoDiaria NUMERIC NOT NULL,
+    CONSTRAINT PK_HOTEL PRIMARY KEY(IdFiscal),
+    CONSTRAINT FK_HOTEL FOREIGN KEY(IdFiscal) REFERENCES ServicoHospedagem(IdFiscal) ON DELETE CASCADE,
+    CONSTRAINT CK_CLASSIFICACAO CHECK(Classificacao >= 0 AND Classificacao <= 5),
+    CONSTRAINT CK_PRECO_DIARIA_HOTEL CHECK(PrecoDiaria > 0)
 );
 
 CREATE TABLE Pousada (
-	IdFiscal VARCHAR(30) REFERENCES ServicoHospedagem PRIMARY KEY,
-	PrecoDiaria NUMERIC NOT NULL CHECK (PrecoDiaria > 0)
+	IdFiscal VARCHAR(30),
+	PrecoDiaria NUMERIC NOT NULL,
+    CONSTRAINT PK_POUSADA PRIMARY KEY(IdFiscal),
+    CONSTRAINT FK_POUSADA FOREIGN KEY(IdFiscal) REFERENCES ServicoHospedagem(IdFiscal) ON DELETE CASCADE,
+    CONSTRAINT CK_PRECO_DIARIA_POUSADA CHECK(PrecoDiaria > 0)
 );
 
 CREATE TABLE Hostel (
-	IdFiscal VARCHAR(30) REFERENCES ServicoHospedagem PRIMARY KEY
+	IdFiscal VARCHAR(30),
+    CONSTRAINT PK_HOSTEL PRIMARY KEY(IdFiscal),
+    CONSTRAINT FK_HOSTEL FOREIGN KEY(IdFiscal) REFERENCES ServicoHospedagem(IdFiscal) ON DELETE CASCADE
 );
 
 CREATE TABLE TipoDormitorio (
-	Hostel VARCHAR(30) REFERENCES Hostel,
-	PrecoDiaria NUMERIC CHECK (PrecoDiaria > 0),
-	Capacidade INTEGER CHECK (Capacidade > 0),
-	PRIMARY KEY (Hostel, PrecoDiaria, Capacidade)
+	Hostel VARCHAR(30),
+	PrecoDiaria NUMERIC,
+	Capacidade INTEGER,
+	CONSTRAINT PK_TIPO_DORMITORIO PRIMARY KEY(Hostel, PrecoDiaria, Capacidade),
+    CONSTRAINT FK_TIPO_DORMITORIO FOREIGN KEY(Hostel) REFERENCES Hostel(IdFiscal) ON DELETE CASCADE,
+    CONSTRAINT CK_PRECO_DIARIA_DORMITORIO CHECK(PrecoDiaria > 0),
+    CONSTRAINT CK_CAPACIDADE_DORMITORIO CHECK(Capacidade > 0)
 );
 
 CREATE TABLE Reserva (
-	ServicoHospedagem VARCHAR(30) REFERENCES ServicoHospedagem,
+	ServicoHospedagem VARCHAR(30),
 	PaisTurista VARCHAR(50),
 	TuristaPassaporte VARCHAR(20),
 	NumReserva VARCHAR(25),
 	DataCheckin DATE NOT NULL,
 	DataCheckout DATE NOT NULL,
-	NumPessoas INTEGER NOT NULL CHECK (NumPessoas > 0),
-	FOREIGN KEY (PaisTurista, TuristaPassaporte) REFERENCES Turista (PaisOrigem, NumPassaporte),
-	PRIMARY KEY (ServicoHospedagem, PaisTurista, TuristaPassaporte, NumReserva)
+	NumPessoas INTEGER NOT NULL,
+    CONSTRAINT PK_RESERVA PRIMARY KEY(ServicoHospedagem, PaisTurista, TuristaPassaporte, NumReserva),
+    CONSTRAINT FK1_RESERVA FOREIGN KEY(ServicoHospedagem) REFERENCES ServicoHospedagem(IdFiscal) ON DELETE CASCADE,
+	CONSTRAINT FK2_RESERVA FOREIGN KEY(PaisTurista, TuristaPassaporte) REFERENCES Turista(PaisOrigem, NumPassaporte) ON DELETE CASCADE,
+    CONSTRAINT CK_NUM_PESSOAS CHECK(NumPessoas > 0)
 );
 
 CREATE TABLE CompanhiaAerea (
-	IdFiscal VARCHAR(30) PRIMARY KEY,
+	IdFiscal VARCHAR(30),
 	Nome VARCHAR(25) NOT NULL,
 	Pais VARCHAR(50),
 	Cidade VARCHAR(50),
 	ZipCode VARCHAR(30),
 	Bairro VARCHAR(50),
 	Logradouro VARCHAR(100),
-	Numero INTEGER
+	Numero INTEGER,
+    CONSTRAINT PK_COMPANHIA_AEREA PRIMARY KEY(IdFiscal)
 );
 
 CREATE TABLE Aviao (
-	NumeroCauda VARCHAR(30) PRIMARY KEY,
-	CompanhiaProprietaria VARCHAR(30) REFERENCES CompanhiaAerea,
+	NumeroCauda VARCHAR(30),
+	CompanhiaProprietaria VARCHAR(30),
 	Nome VARCHAR(25) NOT NULL,
 	Fabricante VARCHAR(25) NOT NULL,
-	Capacidade INTEGER NOT NULL CHECK (Capacidade > 0)
+	Capacidade INTEGER NOT NULL,
+    CONSTRAINT PK_AVIAO PRIMARY KEY(NumeroCauda),
+    CONSTRAINT FK_AVIAO FOREIGN KEY(CompanhiaProprietaria) REFERENCES CompanhiaAerea(IdFiscal) ON DELETE CASCADE,
+    CONSTRAINT CK_CAPACIDADE_AVIAO CHECK (Capacidade > 0)
 );
 
 CREATE TABLE Voo (
-	Id SERIAL PRIMARY KEY,
+	Id SERIAL,
 	NumeroVoo VARCHAR(25) NOT NULL,
 	DataSaida DATE NOT NULL,
 	HorarioSaida TIME NOT NULL,
-	PaisDestino VARCHAR(50) NOT NULL REFERENCES Pais,
+	PaisDestino VARCHAR(50) NOT NULL,
 	PaisOrigem VARCHAR(50) NOT NULL,
-	Aviao VARCHAR(30) NOT NULL REFERENCES Aviao,
-	UNIQUE (NumeroVoo, DataSaida, HorarioSaida)
+	Aviao VARCHAR(30) NOT NULL,
+    CONSTRAINT PK_VOO PRIMARY KEY(Id),
+	CONSTRAINT UQ_VOO UNIQUE(NumeroVoo, DataSaida, HorarioSaida),
+    CONSTRAINT FK1_VOO FOREIGN KEY(PaisDestino) REFERENCES Pais(Nome) ON DELETE CASCADE,
+    CONSTRAINT FK2_VOO FOREIGN KEY(Aviao) REFERENCES Aviao(NumeroCauda) ON DELETE CASCADE
 );
 
 CREATE TABLE Passagem (
-	NumTicketEletronico VARCHAR(25) PRIMARY KEY,
-	Voo SERIAL NOT NULL REFERENCES Voo,
+	NumTicketEletronico VARCHAR(25),
+	Voo SERIAL NOT NULL,
 	CidadeOrigem VARCHAR(30) NOT NULL,
 	CidadeDestino VARCHAR(30) NOT NULL,
 	Classe VARCHAR(30) NOT NULL,
@@ -158,5 +186,8 @@ CREATE TABLE Passagem (
 	HoraCompra TIME,
 	PaisTuristaComprador VARCHAR(50),
 	PassaporteTuristaComprador VARCHAR(20),
-	FOREIGN KEY (PaisTuristaComprador, PassaporteTuristaComprador) REFERENCES Turista (PaisOrigem, NumPassaporte)
+    CONSTRAINT PK_PASSAGEM PRIMARY KEY(NumTicketEletronico),
+    CONSTRAINT FK1_PASSAGEM FOREIGN KEY(Voo) REFERENCES Voo(Id) ON DELETE CASCADE,
+	CONSTRAINT FK2_PASSAGEM FOREIGN KEY(PaisTuristaComprador, PassaporteTuristaComprador) REFERENCES Turista(PaisOrigem, NumPassaporte) ON DELETE SET NULL,
+    CONSTRAINT CK_PRECO_PASSAGEM CHECK(Preco > 0)
 );

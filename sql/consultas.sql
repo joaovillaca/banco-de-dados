@@ -1,4 +1,4 @@
-/* Consulta 1: Nome e País de origem de todos os Turistas que participam do Festival Tomorrowland */
+/* Consulta 1: Nome, Número de Passaporte e País de origem de todos os Turistas que participam do Festival Tomorrowland */
 SELECT DISTINCT T.Nome, T.NumPassaporte, I.PaisTurista as paisOrigem
 FROM Ingresso I, Turista T
 WHERE I.PaisTurista = T.PaisOrigem 
@@ -20,12 +20,13 @@ WHERE V.PaisDestino = 'Brazil'
                                   WHERE Nome = 'Hong Kong Airlines');	
 	
 /* Consulta 3 (Divisão): Turistas que vão para todas as festas da Tomorrowland */
-/* Turistas */
 SELECT T.Nome, T.NumPassaporte, T.PaisOrigem
 FROM Turista T
 WHERE NOT EXISTS (( SELECT Nome 
 					FROM Festa 
-					WHERE Festival = 3
+					WHERE Festival = (SELECT IdFiscal
+									 FROM Festival
+									 WHERE Nome = 'Tomorrowland'))
 					EXCEPT
 				  ( SELECT Festa
 					FROM Ingresso
@@ -68,10 +69,11 @@ GROUP BY Nome_Turista, T.PaisOrigem, T.NumPassaporte
 ORDER BY Gasto_Total DESC;
 
 /* Consulta 7: Nome de Turistas que compraram ingresso para uma festa no qual o Alok apresenta*/
-SELECT DISTINCT T.Nome as Turista, I.Festa, F.Nome as Festival 
-FROM Ingresso I, Turista T, Atracoes A, Festival F
-WHERE A.Atracao = 'Alok'
-ORDER BY Festival;
-
+SELECT DISTINCT T.Nome as Turista, I.Festa, F.Nome as Festival
+	FROM Ingresso I INNER JOIN Turista T ON (I.PaisTurista = T.PaisOrigem AND I.TuristaPassaporte = T.NumPassaporte)
+		   			INNER JOIN Festival F ON (I.Festival = F.IdFiscal)  
+				    INNER JOIN Atracoes A ON (I.Festa = A.Festa)
+	WHERE A.Atracao = 'Alok'
+	ORDER BY Festival;
 
 	
