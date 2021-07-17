@@ -130,8 +130,10 @@ while(True):
         # INSERT na database: Turista recém-cadastrado
         # essa é a forma de inserção recomendada pelo psycopg2 (https://www.psycopg.org/docs/usage.html)
         try:
-            session.execute("INSERT INTO Turista (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha) values (%s, %s, %s, %s, %s, %s, %s)",
-            (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha))
+            session.execute("""INSERT INTO Turista (PaisOrigem, NumPassaporte, Nome,
+                                                    DataNascimento, Telefone, Email, Senha)
+                                                    values (%s, %s, %s, %s, %s, %s, %s)""",
+                            (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha))
         except Exception:
             myHeader(ConsoleHeader)
             print("PSQL: não foi possível fazer a inserção.")       
