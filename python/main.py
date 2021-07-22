@@ -136,7 +136,9 @@ while(True):
                             (PaisOrigem, NumPassaporte, Nome, DataNascimento, Telefone, Email, Senha))
         except Exception:
             myHeader(ConsoleHeader)
-            print("PSQL: não foi possível fazer a inserção.")       
+            print("PSQL: não foi possível fazer a inserção.")
+            session.close()
+            continue       
     
         con.commit()
         session.close()
